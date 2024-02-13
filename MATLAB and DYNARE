@@ -1,0 +1,71 @@
+****MATLAB/DYNARE CODE*****
+ var y, ygap, yn, pi, i, rn, r, ry, iy, piy, mr, mry, delta_m; // For figure 3 in 
+the paper g and a are assumed to be zero, thus excluded here
+ varexo e_m; // only exogenous variable is our monetary policy shock
+ parameters BETA, THETA, SIGMA, KAPPA, LAMBDA, PHI, EPSILON, ETA, RHO, RHO_M; // 
+We 
+should also have gamma, but the paper assumes it as zero, similarly PHI_A but for
+ figure 3: monetary shocks the paper assumes a=o therefore PHI_A*a=0 
+BETA=0.99; // given, household discount factor 
+THETA=0.75; // price stickiness, average price duration of one year
+ SIGMA=1; // intertemporal elasticity of consumption or risk aversion parameter 
+for 
+consumption
+ PHI=1; // inverse of elasticity of labour supply
+ EPSILON=11; // elasticity of labour supply across different goods
+ ETA=4; // elasticity of nominal interest rate, accquired from the money demand 
+equation
+ RHO=-log(BETA); // EQUATION(4) 
+RHO_M=0.5; // persistence of money supply, or money growth autocorrelation 
+// DEFINING THE PARAMETERS ACCORDING TO THE PAPER
+ LAMBDA=(1-THETA)*(1-(BETA*THETA))/THETA; 
+KAPPA= LAMBDA*(SIGMA+PHI);
+ model;
+ yn= 0; // natrual level of output, assumed to be zero for figure 3
+ ygap= ((-1/SIGMA)*(i-pi(+1)-rn))+ ygap(+1); // DIS
+ y= ygap+yn;
+ r=i-pi(+1);// Fisher Equation
+ rn= RHO;// as g=0 and a=0 the equation(14) reduces to just RHO
+ pi=BETA*pi(+1)+ (KAPPA*ygap); // NKPC
+ mr= y-(ETA*i); // money demand equation, equation(5)
+ mr= mr(-1)+delta_m-pi; // first diffrencing equation(5) and writing in terms of 
+delta_m and pi
+ delta_m=(RHO_M*delta_m(-1))+e_m; // growth of money supply equation, gives us our
+ monetary policy rule
+ ry= 4*r;// annualised real ineterst rate
+ iy=4*i;//annualised nominal interest rate
+ piy=4*pi;// annualised inflation
+ mry=4*mr; // annualised real money demand
+ end;
+ /* initval;
+ ygap = 0;
+ y = 0;
+ yn = 0;
+ pi = 0;
+ i = RHO;
+ rn = RHO;
+ e_m=0;
+ delta_m=0;
+ r=RHO;
+ ry=4*r;
+ mr=0;
+ mry=4*mr;
+iy=4*i;
+ piy=4*pi;
+ end;
+ */
+ steady;
+ check;
+ shocks;
+ var e_m; stderr 1; // Money demand shock of 1%
+ end;
+ //IRF period are set to 25 quarters as in Gali(figure 3)
+ stoch_simul(irf=25, order=1); // for 25 quarters and taking a first order taylor 
+approximation
+ //Plot the graphs: responses to the monetary policy shock:
+ figure(3);
+ subplot(4,1,1); plot(piy_e_m,'-o'); title('Inflation');axis ([1 25 0 3]);
+ subplot(4,1,2); plot(y_e_m,'-o'); title('Output');axis ([1 25 0 1.5]);
+ subplot(4,1,3); plot(ry_e_m,'-o'); title('real rate');axis ([1 25 -1.5 0]);
+ subplot(4,1,4); plot(iy_e_m,'-o'); title('Nominal rate');axis ([1 25 0 0.8]);
+ suptitle ('Figure 3: Dynamic Responses to a Monetary Policy Shock')

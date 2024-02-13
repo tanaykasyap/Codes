@@ -1,0 +1,82 @@
+var y, ygap, yn, pi, i, rn, r, ry, iy, piy, mr, mry, delta_m, a, n; // For figure
+ 5 g is assumed zero in the paper, thus excluded here
+ varexo e_a;// only exogenous variable is our technology shock
+ parameters BETA, THETA, SIGMA, KAPPA, LAMBDA, PHI, EPSILON, ETA, RHO, RHO_M, 
+RHO_A,
+ PHI_A; // We should also have gamma, but the paper assumes it as zero,thus 
+excluded 
+BETA=0.99;// household discount factor
+ THETA=0.75; // price stickiness, average price duration of one year
+ SIGMA=1; // intertemporal elasticity of consumption
+ PHI=1; // inverse of elasticity of labour supply
+ EPSILON=11; // elasticity of substitution across goods
+ ETA=4; // elasticity of nominal interest rate, accquired from money demand 
+equation
+ RHO=-log(BETA); // equation(4)
+ RHO_M=0.5; // persitence of money supply or money growth autocorrelation 
+RHO_A=0.9999;// persistence of technology, the paper says a permanent 
+technological 
+shock, therefore in theor it should be 1, however with RHO_a=1 dynare says 
+impossible to find steady state thus taken as 0.9999
+ // DEFINING THE PARAMETERS ACCORDING TO THE PAPER
+ LAMBDA=(1-THETA)*(1-(BETA*THETA))/THETA; 
+KAPPA= LAMBDA*(SIGMA+PHI);
+ PHI_A=(1+PHI)/(SIGMA+PHI);
+ model;
+ yn= PHI_A*a; // In the paper gamma and g are assumed zero thus equation(11) 
+reduces 
+to this
+ ygap= ((-1/SIGMA)*(i-pi(+1)-rn))+ ygap(+1); // DIS
+ y= ygap+yn;
+ r=i-pi(+1);// Fisher Equation
+ rn= RHO+(SIGMA*PHI_A*RHO_A*(a(+1)-a));// as g=0 the equation(14) reduces to this
+ pi=BETA*pi(+1)+ (KAPPA*ygap); // NKPC
+ y=a + n ; // equation(9) or production function in logs
+ a= RHO_A*a(-1)+e_a; // AR(1) technology, slight missuse of notation here as it is
+ permanent shock, the growth rate of technology equation reduces to one in levels,
+ but have a RHO_A as otherwise dynare says cannot find ss
+ mr= y-(ETA*i); // money demand equation, equation(5)
+ mr= mr(-1)+delta_m-pi; // first diffrencing equation(5) and writing in terms of 
+delta_m and pi
+ delta_m= 0; // constant money supply, assumed in the paper by gali
+ ry= 4*r;// annualised real interest rate
+ iy=4*i;//annualised nominal interest rate
+ piy=4*pi;// annualised inflation
+ mry=4*mr; // annualised real money demand
+ end;
+ /* initval;
+ ygap = 0;
+ y = 0;
+ yn = 0;
+ pi = 0;
+a=0;
+ n=0;
+ i = RHO;
+ rn = RHO;
+ //nn=0
+ e_a=0;
+ delta_m=0;
+ delta_a=0;
+ r=RHO;
+ ry=4*r;
+ mr=0;
+ mry=4*mr;
+ iy=4*i;
+ piy=4*pi;
+ end;
+ */
+ steady;
+ check;
+ shocks;
+ var e_a; stderr 1; // Technology Shock
+ end;
+ //IRF period are set to 25 quarters as in Gali(figure 5)
+ stoch_simul(irf=25, order=1); // IRFs with length 25 quarters and first order 
+taylor approximation
+ //Plot the graphs: responses to the technology shock:
+ figure(5);
+ subplot(4,1,1); plot(piy_e_a,'-o'); title('Inflation');axis ([1 25 -1.5 0]);
+ subplot(4,1,2); plot(ygap_e_a,'-o'); title('Output gap');axis ([1 25 -0.8 0]);
+ subplot(4,1,3); plot(y_e_a,'-o'); title('Output');axis ([1 25 0.2 1]);
+ subplot(4,1,4); plot(n_e_a,'-o'); title('Employment');axis ([1 25 -0.8 0]);
+ suptitle ('Figure 5: Dynamic Responses to a Technology Shock Shock');
